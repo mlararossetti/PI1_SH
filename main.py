@@ -240,7 +240,7 @@ class GameRecommendation(BaseModel):
 async def recommend_games(title: str):
     normalized_title = normalize_title(title)
     
-    dfmodelo = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfmodelo.csv')
+    dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfmodelo.csv')
 
     # Crear una columna de títulos normalizados
     if 'normalized_title' not in dfgames.columns:
