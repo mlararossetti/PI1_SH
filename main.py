@@ -5,7 +5,7 @@ from typing import List, Dict
 
 
 app = FastAPI()
-csv_file_path = r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv'
+csv_file_path = r'"C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv"'
 csv_file_path2 = r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfreviews.csv'
 csv_file_path3 = r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfitems.parquet'
 dfgames = pd.read_csv(csv_file_path)
