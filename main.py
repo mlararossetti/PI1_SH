@@ -25,7 +25,7 @@ def read_root():
 def developer(desarrollador: str):
     try:
         # Filtrar el DataFrame
-        dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', sep=';', on_bad_lines='skip', usecols=['developer', 'year', 'price'])
+        dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', usecols=['id', 'price'])
         juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
 
         # Verificar si hay juegos para el desarrollador
