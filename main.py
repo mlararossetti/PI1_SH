@@ -220,41 +220,41 @@ def developer_reviews_analysis(desarrolladora: str):
     return resultado
 
 
-#Normalizar titulos por si el usuario ingresa en min, may
+# Normalizar títulos por si el usuario ingresa en min, may
 def normalize_title(title):
     return re.sub(r'[^a-zA-Z0-9 ]', ' ', title).lower().strip()
-
-# Vectorizar e iniciar el modelo KNN
-tfidf_vectorizer = TfidfVectorizer()
-tfidf_matrix = tfidf_vectorizer.fit_transform(dfgames['description'])
-
-knn_model = NearestNeighbors(n_neighbors=6, metric='cosine', algorithm='brute')
-knn_model.fit(tfidf_matrix)
 
 # Definir un modelo Pydantic para la respuesta
 class GameRecommendation(BaseModel):
     title: str
 
-# Funcion para recomendar segun el modelo creado
+# Función para recomendar según el modelo creado
 @app.get("/recommend/", response_model=List[GameRecommendation])
 async def recommend_games(title: str):
-    normalized_title = normalize_title(title)
-    
+    # Cargar el CSV dentro de la función
     dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfmodelo.csv')
-
-    # Crear una columna de títulos normalizados
-    if 'normalized_title' not in dfgames.columns:
-        dfgames['normalized_title'] = dfgames['title'].apply(normalize_title)
     
+    # Crear una columna de títulos normalizados
+    dfgames['normalized_title'] = dfgames['title'].apply(normalize_title)
+
+    normalized_title = normalize_title(title)
+
     if normalized_title not in dfgames['normalized_title'].values:
         raise HTTPException(status_code=404, detail=f"El juego '{title}' no fue encontrado en la base de datos.")
-    
+
+    # Vectorizar e iniciar el modelo KNN
+    tfidf_vectorizer = TfidfVectorizer()
+    tfidf_matrix = tfidf_vectorizer.fit_transform(dfgames['description'])
+
+    knn_model = NearestNeighbors(n_neighbors=6, metric='cosine', algorithm='brute')
+    knn_model.fit(tfidf_matrix)
+
     game_index = dfgames[dfgames['normalized_title'] == normalized_title].index[0]
-    
-    distances, indices = knn_model.kneighbors(tfidf_matrix[game_index], n_neighbors=6)  
-    
-    recommended_games = dfgames.iloc[indices.flatten()[1:]]  
-    
+
+    distances, indices = knn_model.kneighbors(tfidf_matrix[game_index], n_neighbors=6)
+
+    recommended_games = dfgames.iloc[indices.flatten()[1:]]
+
     # Crear una lista de recomendaciones
     recommendations = [
         GameRecommendation(title=row['title'])
