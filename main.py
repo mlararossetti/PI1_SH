@@ -26,10 +26,7 @@ def developer(desarrollador: str):
     try:
         # Filtrar el DataFrame
         csv_path = os.path.join(os.path.dirname(__file__), 'dfgames.csv')
-        dfgames = pd.read_csv(csv_path, usecols=['id', 'price'])
-        juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
-        dfgames = pd.read_csv(dfgames.csv, usecols=['id', 'price'])
-        juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
+        dfgames = pd.read_csv(csv_path, usecols=['id', 'price','developer'])
         juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
 
         # Verificar si hay juegos para el desarrollador
