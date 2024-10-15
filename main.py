@@ -8,7 +8,6 @@ from sklearn.neighbors import NearestNeighbors
 from typing import List
 
 
-
 app = FastAPI()
 #csv_file_path = 'dfgames.csv'
 #csv_file_path2 = 'dfreviews.csv'
@@ -25,7 +24,8 @@ def read_root():
 def developer(desarrollador: str):
     try:
         # Filtrar el DataFrame
-        dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', usecols=['id', 'price'])
+        dfgames = pd.read_csv(dfgames.csv, usecols=['id', 'price'])
+        juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
         juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
 
         # Verificar si hay juegos para el desarrollador
