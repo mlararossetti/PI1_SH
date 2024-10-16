@@ -31,7 +31,7 @@ Se hace un merge entre los distintos archivos para comparar por ejemplo populari
 
 
 <p align="center">
-    <img src="images/genre.png" height="400">
+    <img src="Images/genre.png" height="400">
 </p>
 
 
@@ -39,11 +39,11 @@ Tambien se hicieron varias consultas para entender un poco mejor los datos como 
 
 
 <p align="center">
-<img src "images\juegospopulares.png" height=300>
+<img src "Images\juegospopulares.png" height=300>
 </p>
 
 <p align="center">
-<img src="images\tags.png" height=400>
+<img src="Images\tags.png" height=400>
 </p>
 
 ## API y RENDERIZADO
@@ -53,7 +53,7 @@ Se crearon 5 funciones para los endpoints que se consumirán en la API:
     `Cantidad` de items y `porcentaje` de contenido Free por año según empresa desarrolladora. 
 Ejemplo de retorno:
 <p align="center">
-<img src="images\api1.png" height=400>
+<img src="Images\api1.png" height=400>
 </p>
 
 + def **userdata( *`User_id` : str* )**:
@@ -61,7 +61,7 @@ Ejemplo de retorno:
 
 Ejemplo de retorno:
 <p align="center">
-<img src="images\api2.png" height=400>
+<img src="Images\api2.png" height=400>
 </p>
 
 
@@ -75,7 +75,7 @@ Ejemplo de retorno:
 Ejemplo de retorno: 
 
 <p align="center">
-<img src="images\api3.png" height=400>
+<img src="Images\api3.png" height=400>
 </p>
 
 
@@ -86,7 +86,7 @@ Ejemplo de retorno:
 
 Ejemplo de retorno: 
 <p align="center">
-<img src="images\api4.png" height=400>
+<img src="Images\api4.png" height=400>
 </p>
 
 <br/>
@@ -97,7 +97,7 @@ Se realizó un modelo de recomendación utilizando KNN y cosine similarity, con 
 
 Ejemplo de retorno: 
 <p align="center">
-<img src="images\modelo.png" height=400>
+<img src="Images\modelo.png" height=400>
 </p>
 
 
