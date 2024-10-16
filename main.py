@@ -113,19 +113,50 @@ def user_data(user_id: str):
 
     return results
 
+def UserForGenre(genero: str):
+    # Hacer merge de los DataFrames en función de 'item_id' y 'user_id'
+    merged_df_ufg = pd.merge(dfitems[['item_id','user_id','playtime_forever']], dfgames[['id', 'genres', 'year']], 
+                              left_on='item_id', right_on='id', how='left')
+
+    # Filtrar por el género específico
+    genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero, case=False, na=False)].copy()  # Usar .copy() para evitar advertencias
+
+    if genre_data.empty:
+        return f"No se encontraron datos para el género especificado: {genero}"
+
+    # Convertir 'playtime_forever' a numérico
+    genre_data['playtime_forever'] = pd.to_numeric(genre_data['playtime_forever'], errors='coerce')
+
+    # Agrupar por usuario y año, sumando las horas jugadas
+    df_agrupado = genre_data.groupby(['user_id', 'year'])['playtime_forever'].sum().reset_index()
+
+    # Encontrar el usuario con más horas jugadas en total
+    horas_por_usuario = df_agrupado.groupby('user_id')['playtime_forever'].sum().reset_index()
+    usuario_max = horas_por_usuario.loc[horas_por_usuario['playtime_forever'].idxmax()]
+
+    
+    horas_por_ano_usuario = df_agrupado[df_agrupado['user_id'] == usuario_max['user_id']]
+
+    
+    resultado = {
+        "Usuario con más horas jugadas para el género": usuario_max['user_id'],
+        "Horas jugadas": [{"Año": int(row['year']), "Horas": row['playtime_forever'] / 60} for _, row in horas_por_ano_usuario.iterrows()]  # Convertir minutos a horas
+    }
+
+    return resultado
+
 @app.get("/genre/{genero}")
 def userForGenre(genero: str):
     """
     Obtiene el usuario que más horas ha jugado en un género específico,
     junto con las horas jugadas por año.
     """
-    try:
-        # Cargar los datos de los usuarios y el tiempo de juego
-        dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
-        dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'genres'])
+    # Cargar los datos de los usuarios y el tiempo de juego
+    dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
+    dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'genres'])
 
-        # Unir los DataFrames
-        merged_df_ufg = pd.merge(
+    # Unir los DataFrames
+    merged_df_ufg = pd.merge(
             dfitems[['item_id', 'user_id', 'playtime_forever']],
             dfgames[['id', 'genres', 'year']],
             left_on='item_id', 
@@ -134,41 +165,37 @@ def userForGenre(genero: str):
         )
 
         # Filtrar por género
-        genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero_normalizado, case=False, na=False)].copy()
+    genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero_normalizado, case=False, na=False)].copy()
 
         # Verificar si hay datos para el género especificado
-        if genre_data.empty:
+    if genre_data.empty:
             raise HTTPException(status_code=404, detail=f"No se encontraron datos para el género especificado: {genero}")
 
-        genre_data['playtime_forever'] = pd.to_numeric(genre_data['playtime_forever'], errors='coerce')
+    genre_data['playtime_forever'] = pd.to_numeric(genre_data['playtime_forever'], errors='coerce')
 
         # Agrupar por usuario y año, sumando las horas jugadas
-        df_agrupado = genre_data.groupby(['user_id', 'year'])['playtime_forever'].sum().reset_index()
+    df_agrupado = genre_data.groupby(['user_id', 'year'])['playtime_forever'].sum().reset_index()
 
         # Encontrar el usuario con más horas jugadas en total
-        horas_por_usuario = df_agrupado.groupby('user_id')['playtime_forever'].sum().reset_index()
+    horas_por_usuario = df_agrupado.groupby('user_id')['playtime_forever'].sum().reset_index()
         
         # Verificar si hay usuarios
-        if horas_por_usuario.empty:
+    if horas_por_usuario.empty:
             raise HTTPException(status_code=404, detail="No se encontraron usuarios para el género especificado.")
 
-        usuario_max = horas_por_usuario.loc[horas_por_usuario['playtime_forever'].idxmax()]
+    usuario_max = horas_por_usuario.loc[horas_por_usuario['playtime_forever'].idxmax()]
 
         # Obtener las horas jugadas por año para ese usuario
-        horas_por_ano_usuario = df_agrupado[df_agrupado['user_id'] == usuario_max['user_id']]
+    horas_por_ano_usuario = df_agrupado[df_agrupado['user_id'] == usuario_max['user_id']]
 
         # Formatear el resultado en el formato deseado
-        resultado = {
+    resultado = {
             f"Usuario con más horas jugadas para el género '{genero_normalizado}'": usuario_max['user_id'],
             "Horas jugadas": [{"Año": int(row['year']), "Horas": row['playtime_forever'] / 60} for _, row in horas_por_ano_usuario.iterrows()]  # Convertir minutos a horas
         }
 
-        return resultado
-    
-    except Exception as e:
-        # Manejo de excepciones para depurar
-        print(f"Error en el endpoint /genre: {str(e)}")  # Imprimir el error para depuración
-        raise HTTPException(status_code=500, detail="Error interno en el servidor.")
+    return resultado
+
 
 
 @app.get("/best_developer_year/{year}", response_model=List[Dict[str, str]])
