@@ -16,6 +16,21 @@ app = FastAPI()
 #dfgames = pd.read_csv(csv_file_path)
 #dfreviews = pd.read_csv(csv_file_path2)
 #dfitems = pd.read_parquet(csv_file_path3)
+#Obtener y definir la ruta base del archivo una vez
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Imprimir la ruta una vez para saber dónde está el archivo
+print(f"La ruta base del proyecto es: {BASE_DIR}")
+
+
+# Función auxiliar para obtener la ruta completa del archivo
+@app.get("/path/{filename}")
+def get_file_path(filename):
+    return os.path.join(BASE_DIR, filename)
+
+
+
+
 
 @app.get("/")
 def read_root():
@@ -65,8 +80,10 @@ def developer(desarrollador: str):
 @app.get("/user/{user_id}")
 def user_data(user_id: str):
     # Unir df necesarios
-    dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', columns=['id', 'price'])
-    dfreviews = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfreviews.csv', sep=';', on_bad_lines='skip',usecols=['item_id','user_id','recommend'])
+    csv_path = os.path.join(os.path.dirname(__file__), 'dfgames.csv')
+    csv_path2 = os.path.join(os.path.dirname(__file__),'dfreviews.csv')    
+    dfgames = pd.read_csv(csv_path, columns=['id', 'price'])
+    dfreviews = pd.read_csv(csv_path2, sep=';', on_bad_lines='skip',usecols=['item_id','user_id','recommend'])
     merged_df = pd.merge(dfreviews[['user_id','item_id','recommend']], dfgames[['id', 'price']], left_on='item_id', right_on='id', how='left')
 
     # Filtrar por el user_id específico
@@ -103,6 +120,9 @@ def userForGenre(genero: str):
     genero_normalizado = genero.lower()
 
     # Hacer merge de los DataFrames en función de 'item_id' y 'user_id'
+    csv_path = os.path.join(os.path.dirname(__file__), 'dfitems.parquet')
+    csv_path = os.path.join(os.path.dirname(__file__), 'dfgames.csv')
+            
     dfitems = pd.read_parquet(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfitems.parquet', columns=['user_id', 'item_id', 'playtime_forever']) 
     dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', sep=';', on_bad_lines='skip', usecols=['item_id', 'year','genres'])  
         
