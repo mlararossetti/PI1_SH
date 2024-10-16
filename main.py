@@ -119,8 +119,6 @@ def userForGenre(genero: str):
     Obtiene el usuario que más horas ha jugado en un género específico,
     junto con las horas jugadas por año.
     """
-    genero_normalizado = genero.lower()
-
     try:
         # Cargar los datos de los usuarios y el tiempo de juego
         dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
