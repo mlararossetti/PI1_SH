@@ -94,32 +94,22 @@ def user_data(user_id: str):
 
 @app.get("/genre/{genero}")
 def userForGenre(genero: str):
-    # Normalizar el género a minúsculas para la búsqueda
+    
     genero_normalizado = genero.lower()
-
-    # Hacer merge de los DataFrames en función de 'item_id' y 'user_id'
 
     dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
  
-    dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id', 'year','genres'])  
+    dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year','genres'])  
         
     merged_df_ufg = pd.merge(dfitems[['item_id', 'user_id', 'playtime_forever']],
-                              dfgames[['id', 'genres', 'release_date']],
+                              dfgames[['id', 'genres', 'year']],
                               left_on='item_id', right_on='id', how='left')
 
-    # Filtrar por el género específico usando str.contains
     genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero_normalizado, case=False, na=False)].copy()
 
     if genre_data.empty:
-        raise HTTPException(status_code=404, detail=f"No se encontraron datos para el género especificado: {genero}")
+       raise HTTPException(status_code=404, detail=f"No se encontraron datos para el género especificado: {genero}")
 
-    # Asegurarse de que la columna de fecha sea del tipo datetime
-    genre_data['release_date'] = pd.to_datetime(genre_data['release_date'], errors='coerce')
-
-    # Extraer el año de la columna de fecha
-    genre_data['year'] = genre_data['release_date'].dt.year
-
-    # Convertir 'playtime_forever' a numérico
     genre_data['playtime_forever'] = pd.to_numeric(genre_data['playtime_forever'], errors='coerce')
 
     # Agrupar por usuario y año, sumando las horas jugadas
@@ -140,24 +130,18 @@ def userForGenre(genero: str):
 
     return resultado
 
-
-
 @app.get("/best_developer_year/{year}", response_model=List[Dict[str, str]])
 def best_developer_year(year: int):
     try:
-        # Unir los dataframes `dfreviews` y `dfgames`
-        dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id', 'year','developer'])
-        dfreviews = pd.read_csv(csv_reviews, sep=';', on_bad_lines='skip',usecols=['user_id','item_id','recommend'])
-    
-        merged_df_dev = pd.merge(dfreviews[['user_id', 'item_id', 'recommend', 'sentiment_analysis']],
-                                 dfgames[['id', 'developer', 'release_date']],
-                                 left_on='item_id', right_on='id', how='left')
+        # Unir los dataframes
+        dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'developer'])
+        dfreviews = pd.read_csv(csv_reviews, on_bad_lines='skip', usecols=['user_id', 'item_id', 'recommend', 'sentiment_analysis'])
 
-        # Convertir `release_date` a tipo datetime
-        merged_df_dev['release_date'] = pd.to_datetime(merged_df_dev['release_date'], errors='coerce')
-
-        # Extraer el año de la fecha de lanzamiento
-        merged_df_dev['year'] = merged_df_dev['release_date'].dt.year
+        merged_df_dev = pd.merge(
+            dfreviews[['user_id', 'item_id', 'recommend', 'sentiment_analysis']],
+            dfgames[['id', 'developer', 'year']],
+            left_on='item_id', right_on='id', how='left'
+        )
 
         # Filtrar los datos del año solicitado
         year_data = merged_df_dev[merged_df_dev['year'] == year].copy()
@@ -184,11 +168,12 @@ def best_developer_year(year: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/developer_reviews/{desarrolladora}")
 def developer_reviews_analysis(desarrolladora: str):
     # Unir los DataFrames necesarios
-    dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id','developer'])
-    dfreviews = pd.read_csv(csv_reviews, sep=';', on_bad_lines='skip',usecols=['user_id','item_id','sentiment_analysis'])
+    dfgames = pd.read_csv(csv_games,on_bad_lines='skip', usecols=['id','developer'])
+    dfreviews = pd.read_csv(csv_reviews,on_bad_lines='skip',usecols=['user_id','item_id','sentiment_analysis'])
     merged_df_dev2 = pd.merge(
         dfreviews[['item_id', 'sentiment_analysis']],
         dfgames[['id', 'developer']],
