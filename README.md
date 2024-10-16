@@ -31,8 +31,9 @@ Se hace un merge entre los distintos archivos para comparar por ejemplo populari
 
 
 <p align="center">
-<img src "images\genre.png" height=400>
+    <img src="images/genre.png" height="400">
 </p>
+
 
 Tambien se hicieron varias consultas para entender un poco mejor los datos como los juegos mas populares y los desarrolladores con mejores reviews. Además, se hicieron nubes de palabras para analizar la frecuencia de las mismas en las distintas columnas de los dataframes(**title**,**specs**,etc).
 
