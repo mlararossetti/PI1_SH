@@ -60,7 +60,7 @@ def developer(desarrollador: str):
 @app.get("/user/{user_id}")
 def user_data(user_id: str):
     # Unir df necesarios
-    dfgames = pd.read_csv(csv_games, columns=['id', 'price'])
+    dfgames = pd.read_csv(csv_games, usecols=['id', 'price'])
     dfreviews = pd.read_csv(csv_reviews, sep=';', on_bad_lines='skip',usecols=['item_id','user_id','recommend'])
     merged_df = pd.merge(dfreviews[['user_id','item_id','recommend']], dfgames[['id', 'price']], left_on='item_id', right_on='id', how='left')
 
@@ -98,7 +98,7 @@ def userForGenre(genero: str):
     genero_normalizado = genero.lower()
 
     # Hacer merge de los DataFrames en función de 'item_id' y 'user_id'
-    dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever']) 
+    dfitems = pd.read_parquet(csv_items, usecols=['user_id', 'item_id', 'playtime_forever']) 
     dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id', 'year','genres'])  
         
     merged_df_ufg = pd.merge(dfitems[['item_id', 'user_id', 'playtime_forever']],
