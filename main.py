@@ -7,7 +7,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import re
 
 app = FastAPI()
-
+#Rutas
+csv_games = (r"/opt/render/project/src/dfgames.csv")
+csv_reviews = (r"/opt/render/project/src/dfreviews.csv")
+csv_items = (r"/opt/render/project/src/dfitems.parquet")
 # Normalizar títulos por si el usuario ingresa en min, may
 def normalize_title(title):
     return re.sub(r'[^a-zA-Z0-9 ]', ' ', title).lower().strip()
