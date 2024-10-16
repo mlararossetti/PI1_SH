@@ -10,27 +10,14 @@ import os
 
 
 app = FastAPI()
+csv_games = ('/opt/render/project/src/dfgames.csv')
+
 #csv_file_path = 'dfgames.csv'
 #csv_file_path2 = 'dfreviews.csv'
 #csv_file_path3 = 'dfitems.parquet'
 #dfgames = pd.read_csv(csv_file_path)
 #dfreviews = pd.read_csv(csv_file_path2)
 #dfitems = pd.read_parquet(csv_file_path3)
-#Obtener y definir la ruta base del archivo una vez
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Imprimir la ruta una vez para saber dónde está el archivo
-print(f"La ruta base del proyecto es: {BASE_DIR}")
-
-
-# Función auxiliar para obtener la ruta completa del archivo
-@app.get("/path/{filename}")
-def get_file_path(filename):
-    return os.path.join(BASE_DIR, filename)
-
-
-
-
 
 @app.get("/")
 def read_root():
@@ -40,8 +27,7 @@ def read_root():
 def developer(desarrollador: str):
     try:
         # Filtrar el DataFrame
-        csv_path = os.path.join(os.path.dirname(__file__), 'dfgames.csv')
-        dfgames = pd.read_csv(csv_path, usecols=['id', 'price','developer','release_date'])
+        dfgames = pd.read_csv(csv_games, usecols=['id', 'price','developer','release_date'])
         juegos_desarrollador = dfgames[dfgames['developer'] == desarrollador].copy()
 
         # Verificar si hay juegos para el desarrollador
