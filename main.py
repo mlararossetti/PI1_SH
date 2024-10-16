@@ -61,10 +61,8 @@ def developer(desarrollador: str):
         # Calcular el porcentaje de juegos gratuitos por año
         resumen_anual['free_percentage'] = (resumen_anual['free_items'] / resumen_anual['total_items']) * 100
 
-        # Redondear el porcentaje a 2 decimales
         resumen_anual['free_percentage'] = resumen_anual['free_percentage'].round(2)
 
-        # Renombrar columnas para coincidir con la consigna
         resumen_anual.columns = ['Año', 'Cantidad de Items', 'Items Gratuitos', 'Porcentaje Gratuito']
 
         # Devolver solo las columnas seleccionadas como un diccionario
@@ -119,40 +117,40 @@ def userForGenre(genero: str):
     Obtiene el usuario que más horas ha jugado en un género específico,
     junto con las horas jugadas por año.
     """
-
     dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
     dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'genres'])
 
-    dfgamesg  = dfgames[dfgames['genres'].apply(lambda x: genero in x)]
-
-
-    merged_df_ufg = pd.merge(dfitems[['item_id', 'user_id', 'playtime_forever']],
-                              dfgamesg[['id', 'genres', 'year']],
-                              left_on='item_id', right_on='id', how='left')
-
-    #genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero, case=False, na=False)]
+    # Filtrar dfgames para obtener solo los juegos del género especificado
+    dfgamesg = dfgames[dfgames['genres'].apply(lambda x: genero.lower() in x.split(','))]
 
     if dfgamesg.empty:
-       raise HTTPException(status_code=404, detail=f"No se encontraron datos para el género especificado: {genero}")
+        raise HTTPException(status_code=404, detail=f"No se encontraron datos para el género especificado: {genero}")
+
+    # Unir los DataFrames
+    merged_df_ufg = pd.merge(
+        dfitems[['item_id', 'user_id', 'playtime_forever']],
+        dfgamesg[['id', 'genres', 'year']],
+        left_on='item_id', right_on='id', how='left'
+    )
 
     merged_df_ufg['playtime_forever'] = pd.to_numeric(merged_df_ufg['playtime_forever'], errors='coerce')
 
-    # Agrupar por usuario y año, sumando las horas jugadas
     df_agrupado = merged_df_ufg.groupby(['user_id', 'year'], as_index=False)['playtime_forever'].sum()
 
-    # Encontrar el usuario con más horas jugadas en total
     usuario_max = df_agrupado.groupby('user_id')['playtime_forever'].sum().idxmax()
 
-    # Obtener las horas jugadas por año para ese usuario
     horas_por_ano_usuario = df_agrupado[df_agrupado['user_id'] == usuario_max]
 
-    # Formatear el resultado
     resultado = {
         f"Usuario con más horas jugadas para el género '{genero}'": usuario_max,
-        "Horas jugadas": [{"Año": int(row['year']), "Horas": row['playtime_forever'] / 60} for _, row in horas_por_ano_usuario.iterrows()]  # Convertir minutos a horas
+        "Horas jugadas": [
+            {"Año": int(row['year']), "Horas": row['playtime_forever'] / 60} 
+            for _, row in horas_por_ano_usuario.iterrows()
+        ]  # Convertir minutos a horas
     }
 
     return resultado
+
 
 
 
