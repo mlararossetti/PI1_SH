@@ -1,24 +1,38 @@
 from fastapi import FastAPI, HTTPException
-import pandas as pd
 from typing import List, Dict
 from pydantic import BaseModel
-import re
-from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
 from sklearn.neighbors import NearestNeighbors
-from typing import List
-import os
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+import re
 
 app = FastAPI()
-csv_games = ('/opt/render/project/src/dfgames.csv')
-csv_reviews = ('/opt/render/project/src/dfreviews.csv')
-csv_items = ('/opt/render/project/src/dfitems.parquet')
+
+# Normalizar títulos por si el usuario ingresa en min, may
+def normalize_title(title):
+    return re.sub(r'[^a-zA-Z0-9 ]', ' ', title).lower().strip()
+
+# Definir un modelo Pydantic para la respuesta
+class GameRecommendation(BaseModel):
+    title: str
+
 @app.get("/")
 def read_root():
-    return {"message": "Bienvenido a la API de Juegos. Usa /developer/{desarrollador} , /user/{user_id}, /genre/{genero} o /best_developer/ {año} para obtener información."}
+    return {
+        "message": (
+            "Bienvenido a la API de Juegos. Contamos con 5 funciones para obtener información de tiempo real, "
+            "tanto de desarrolladores y su popularidad como de usuarios, y géneros de videojuegos.\n"
+            "A lo último contarás con un modelo de recomendación item-item, donde, con tu videojuego de preferencia, "
+            "se te recomendarán otros similares."
+        )
+    }
 
 @app.get("/developer/{desarrollador}")
 def developer(desarrollador: str):
+    """
+    Obtiene un resumen de los juegos de un desarrollador específico,
+    incluyendo la cantidad de juegos lanzados y el porcentaje de juegos gratuitos por año.
+    """
     try:
         # Filtrar el DataFrame
         dfgames = pd.read_csv(csv_games, usecols=['id', 'price','developer','release_date'])
@@ -59,10 +73,14 @@ def developer(desarrollador: str):
 
 @app.get("/user/{user_id}")
 def user_data(user_id: str):
+    """
+    Obtiene información sobre un usuario específico, incluyendo el dinero gastado,
+    la cantidad de ítems comprados y el porcentaje de recomendaciones positivas.
+    """
     # Unir df necesarios
     dfgames = pd.read_csv(csv_games, usecols=['id', 'price'])
-    dfreviews = pd.read_csv(csv_reviews, on_bad_lines='skip',usecols=['item_id','user_id','recommend'])
-    merged_df = pd.merge(dfreviews[['user_id','item_id','recommend']], dfgames[['id', 'price']], left_on='item_id', right_on='id', how='left')
+    dfreviews = pd.read_csv(csv_reviews, on_bad_lines='skip', usecols=['item_id', 'user_id', 'recommend'])
+    merged_df = pd.merge(dfreviews[['user_id', 'item_id', 'recommend']], dfgames[['id', 'price']], left_on='item_id', right_on='id', how='left')
 
     # Filtrar por el user_id específico
     user_datas = merged_df[merged_df['user_id'] == user_id]
@@ -94,12 +112,15 @@ def user_data(user_id: str):
 
 @app.get("/genre/{genero}")
 def userForGenre(genero: str):
-    
+    """
+    Obtiene el usuario que más horas ha jugado en un género específico,
+    junto con las horas jugadas por año.
+    """
     genero_normalizado = genero.lower()
 
     dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
  
-    dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year','genres'])  
+    dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'genres'])  
         
     merged_df_ufg = pd.merge(dfitems[['item_id', 'user_id', 'playtime_forever']],
                               dfgames[['id', 'genres', 'year']],
@@ -132,6 +153,9 @@ def userForGenre(genero: str):
 
 @app.get("/best_developer_year/{year}", response_model=List[Dict[str, str]])
 def best_developer_year(year: int):
+    """
+    Obtiene el top 3 de desarrolladores con más recomendaciones en un año específico.
+    """
     try:
         # Unir los dataframes
         dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'developer'])
@@ -168,12 +192,15 @@ def best_developer_year(year: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.get("/developer_reviews/{desarrolladora}")
 def developer_reviews_analysis(desarrolladora: str):
+    """
+    Analiza las reseñas de un desarrollador específico, devolviendo la cantidad de reseñas
+    positivas y negativas.
+    """
     # Unir los DataFrames necesarios
-    dfgames = pd.read_csv(csv_games,on_bad_lines='skip', usecols=['id','developer'])
-    dfreviews = pd.read_csv(csv_reviews,on_bad_lines='skip',usecols=['user_id','item_id','sentiment_analysis'])
+    dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id','developer'])
+    dfreviews = pd.read_csv(csv_reviews, on_bad_lines='skip', usecols=['user_id','item_id','sentiment_analysis'])
     merged_df_dev2 = pd.merge(
         dfreviews[['item_id', 'sentiment_analysis']],
         dfgames[['id', 'developer']],
@@ -202,18 +229,11 @@ def developer_reviews_analysis(desarrolladora: str):
 
     return resultado
 
-
-# Normalizar títulos por si el usuario ingresa en min, may
-def normalize_title(title):
-    return re.sub(r'[^a-zA-Z0-9 ]', ' ', title).lower().strip()
-
-# Definir un modelo Pydantic para la respuesta
-class GameRecommendation(BaseModel):
-    title: str
-
-# Función para recomendar según el modelo creado
 @app.get("/recommend/", response_model=List[GameRecommendation])
 async def recommend_games(title: str):
+    """
+    Recomienda juegos similares a un título específico utilizando un modelo KNN.
+    """
     # Cargar el CSV dentro de la función
     dfgames = pd.read_csv(('/opt/render/project/src/dfmodelo.csv'))
     
