@@ -123,19 +123,22 @@ def userForGenre(genero: str):
     dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever'])
     dfgames = pd.read_csv(csv_games, on_bad_lines='skip', usecols=['id', 'year', 'genres'])
 
+    dfgamesg  = dfgames[dfgames['genres'].apply(lambda x: genero in x)]
+
+
     merged_df_ufg = pd.merge(dfitems[['item_id', 'user_id', 'playtime_forever']],
-                              dfgames[['id', 'genres', 'year']],
+                              dfgamesg[['id', 'genres', 'year']],
                               left_on='item_id', right_on='id', how='left')
 
-    genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero, case=False, na=False)]
+    #genre_data = merged_df_ufg[merged_df_ufg['genres'].str.contains(genero, case=False, na=False)]
 
-    if genre_data.empty:
+    if dfgamesg.empty:
        raise HTTPException(status_code=404, detail=f"No se encontraron datos para el género especificado: {genero}")
 
-    genre_data['playtime_forever'] = pd.to_numeric(genre_data['playtime_forever'], errors='coerce')
+    merged_df_ufg['playtime_forever'] = pd.to_numeric(merged_df_ufg['playtime_forever'], errors='coerce')
 
     # Agrupar por usuario y año, sumando las horas jugadas
-    df_agrupado = genre_data.groupby(['user_id', 'year'], as_index=False)['playtime_forever'].sum()
+    df_agrupado = merged_df_ufg.groupby(['user_id', 'year'], as_index=False)['playtime_forever'].sum()
 
     # Encontrar el usuario con más horas jugadas en total
     usuario_max = df_agrupado.groupby('user_id')['playtime_forever'].sum().idxmax()
