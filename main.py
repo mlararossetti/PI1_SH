@@ -11,14 +11,8 @@ import os
 
 app = FastAPI()
 csv_games = ('/opt/render/project/src/dfgames.csv')
-
-#csv_file_path = 'dfgames.csv'
-#csv_file_path2 = 'dfreviews.csv'
-#csv_file_path3 = 'dfitems.parquet'
-#dfgames = pd.read_csv(csv_file_path)
-#dfreviews = pd.read_csv(csv_file_path2)
-#dfitems = pd.read_parquet(csv_file_path3)
-
+csv_reviews = ('/opt/render/project/src/dfreviews.csv')
+csv_items = ('/opt/render/project/src/dfitems.parquet')
 @app.get("/")
 def read_root():
     return {"message": "Bienvenido a la API de Juegos. Usa /developer/{desarrollador} , /user/{user_id}, /genre/{genero} o /best_developer/ {año} para obtener información."}
@@ -66,10 +60,8 @@ def developer(desarrollador: str):
 @app.get("/user/{user_id}")
 def user_data(user_id: str):
     # Unir df necesarios
-    csv_path = os.path.join(os.path.dirname(__file__), 'dfgames.csv')
-    csv_path2 = os.path.join(os.path.dirname(__file__),'dfreviews.csv')    
-    dfgames = pd.read_csv(csv_path, columns=['id', 'price'])
-    dfreviews = pd.read_csv(csv_path2, sep=';', on_bad_lines='skip',usecols=['item_id','user_id','recommend'])
+    dfgames = pd.read_csv(csv_games, columns=['id', 'price'])
+    dfreviews = pd.read_csv(csv_reviews, sep=';', on_bad_lines='skip',usecols=['item_id','user_id','recommend'])
     merged_df = pd.merge(dfreviews[['user_id','item_id','recommend']], dfgames[['id', 'price']], left_on='item_id', right_on='id', how='left')
 
     # Filtrar por el user_id específico
@@ -106,11 +98,8 @@ def userForGenre(genero: str):
     genero_normalizado = genero.lower()
 
     # Hacer merge de los DataFrames en función de 'item_id' y 'user_id'
-    csv_path = os.path.join(os.path.dirname(__file__), 'dfitems.parquet')
-    csv_path = os.path.join(os.path.dirname(__file__), 'dfgames.csv')
-            
-    dfitems = pd.read_parquet(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfitems.parquet', columns=['user_id', 'item_id', 'playtime_forever']) 
-    dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', sep=';', on_bad_lines='skip', usecols=['item_id', 'year','genres'])  
+    dfitems = pd.read_parquet(csv_items, columns=['user_id', 'item_id', 'playtime_forever']) 
+    dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id', 'year','genres'])  
         
     merged_df_ufg = pd.merge(dfitems[['item_id', 'user_id', 'playtime_forever']],
                               dfgames[['id', 'genres', 'release_date']],
@@ -155,8 +144,8 @@ def userForGenre(genero: str):
 def best_developer_year(year: int):
     try:
         # Unir los dataframes `dfreviews` y `dfgames`
-        dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', sep=';', on_bad_lines='skip', usecols=['item_id', 'year',"developer"])
-        dfreviews = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfreviews.csv', sep=';', on_bad_lines='skip',usecols=['user_id','item_id','recommend'])
+        dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id', 'year',"developer"])
+        dfreviews = pd.read_csv(csv_reviews, sep=';', on_bad_lines='skip',usecols=['user_id','item_id','recommend'])
     
         merged_df_dev = pd.merge(dfreviews[['user_id', 'item_id', 'recommend', 'sentiment_analysis']],
                                  dfgames[['id', 'developer', 'release_date']],
@@ -196,8 +185,8 @@ def best_developer_year(year: int):
 @app.get("/developer_reviews/{desarrolladora}")
 def developer_reviews_analysis(desarrolladora: str):
     # Unir los DataFrames necesarios
-    dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfgames.csv', sep=';', on_bad_lines='skip', usecols=['item_id','developer'])
-    dfreviews = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfreviews.csv', sep=';', on_bad_lines='skip',usecols=['user_id','item_id','sentiment_analysis'])
+    dfgames = pd.read_csv(csv_games, sep=';', on_bad_lines='skip', usecols=['item_id','developer'])
+    dfreviews = pd.read_csv(csv_reviews, sep=';', on_bad_lines='skip',usecols=['user_id','item_id','sentiment_analysis'])
     merged_df_dev2 = pd.merge(
         dfreviews[['item_id', 'sentiment_analysis']],
         dfgames[['id', 'developer']],
@@ -239,7 +228,7 @@ class GameRecommendation(BaseModel):
 @app.get("/recommend/", response_model=List[GameRecommendation])
 async def recommend_games(title: str):
     # Cargar el CSV dentro de la función
-    dfgames = pd.read_csv(r'C:\Users\user\OneDrive\Escritorio\SOYHENRY\Curso Data Science\fastapitrial\dfmodelo.csv')
+    dfgames = pd.read_csv(('/opt/render/project/src/dfmodelo.csv'))
     
     # Crear una columna de títulos normalizados
     dfgames['normalized_title'] = dfgames['title'].apply(normalize_title)
